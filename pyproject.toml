@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "doubao-web-sse-client"
+version = "0.1.0"
+description = "Doubao Web Python client with QR login and browser-free chat requests"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["curl_cffi>=0.15", "selenium>=4.34,<5"]
+
+[project.scripts]
+doubao-chat = "doubao_sign.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["doubao_sign*"]
