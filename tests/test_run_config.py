@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -7,6 +9,23 @@ from scripts.run import resolve_session_file
 
 
 class SessionFileResolutionTests(unittest.TestCase):
+    def test_script_imports_without_editable_install(self):
+        root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-S",
+                "-c",
+                "import runpy, site, sys; "
+                "sys.path.extend(site.getsitepackages()); "
+                "runpy.run_path('scripts/run.py')",
+            ],
+            cwd=root,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_reads_saved_session_when_login_switch_is_off(self):
         with tempfile.TemporaryDirectory(dir=Path.cwd()) as directory:
             root = Path(directory)
