@@ -431,6 +431,8 @@ class DoubaoClient:
 
         request_timeout = max(timeout, 300.0) if artifact_kind is ArtifactKind.PPT else timeout
         for raw_event in self.stream(prompt, mode=selection, timeout=request_timeout):
+            if raw_event == "[DONE]":
+                break
             text = self.process_event(raw_event)
             if text:
                 yield text

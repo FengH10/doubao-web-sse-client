@@ -258,6 +258,25 @@ class ModePresetTests(unittest.TestCase):
         self.assertEqual(download.call_args.args[0].url, "https://cdn.example/final.png")
         self.assertIn(f"\n已保存图片：{saved}\n", output)
 
+    def test_image_stream_stops_at_done_and_saves_before_connection_closes(self):
+        client = self.make_client()
+        client.stream = lambda *args, **kwargs: iter(
+            [
+                json.dumps({"image_ori_raw": {"url": "https://cdn.example/raw.png"}}),
+                "[DONE]",
+                json.dumps({"text": "不应读取"}, ensure_ascii=False),
+            ]
+        )
+        mode = ModeSelection(FunctionMode.IMAGE, AnswerMode.FAST)
+        with TemporaryDirectory(dir=Path.cwd()) as directory:
+            root = Path(directory)
+            saved = (root / "images" / "raw.png").resolve()
+            with patch("doubao_sign.client.download_artifact", return_value=saved):
+                output = list(client.stream_text("画图", mode=mode, artifact_root=root))
+
+        self.assertNotIn("不应读取", output)
+        self.assertIn(f"\n已保存图片：{saved}\n", output)
+
     def test_ppt_stream_downloads_exported_pptx_file(self):
         client = self.make_client()
         url = "https://cdn.example/export.pptx"
