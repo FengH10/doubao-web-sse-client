@@ -9,7 +9,7 @@ from doubao_sign.client import (
     extract_response_text,
 )
 from doubao_sign.console import run_console, select_mode
-from doubao_sign.modes import DEFAULT_MODE, available_combinations
+from doubao_sign.modes import DEFAULT_MODE, ImageModel, available_combinations
 
 
 class ResponseParserTests(unittest.TestCase):
@@ -137,6 +137,20 @@ class ConsoleTests(unittest.TestCase):
 
         self.assertEqual(selected, available_combinations()[1])
         self.assertIn("请输入 1-6", "".join(output))
+
+    def test_selecting_image_mode_prompts_for_seedream_model(self):
+        answers = iter(["4", "3"])
+        output = []
+
+        selected = select_mode(
+            input_fn=lambda _: next(answers), output_fn=output.append
+        )
+
+        self.assertEqual(selected.function, available_combinations()[3].function)
+        self.assertEqual(selected.image_model, ImageModel.SEEDREAM_5_0_FLASH)
+        rendered = "".join(output)
+        self.assertIn("可用图像模型", rendered)
+        self.assertIn("3. Seedream 5.0 Flash", rendered)
 
     def test_runtime_commands_switch_mode_and_show_help(self):
         client = FakeStreamingClient()

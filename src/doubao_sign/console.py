@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import Protocol
 
 from .client import DoubaoProtocolError
-from .modes import DEFAULT_MODE, ModeSelection, available_combinations
+from .modes import (
+    DEFAULT_MODE,
+    FunctionMode,
+    ModeSelection,
+    available_combinations,
+    available_image_models,
+)
 
 
 class StreamingClient(Protocol):
@@ -25,6 +32,35 @@ def _mode_menu() -> str:
         f"{index}. {selection.label}"
         for index, selection in enumerate(available_combinations(), start=1)
     )
+
+
+def _image_model_menu() -> str:
+    return "\n".join(
+        f"{index}. {model.value}"
+        for index, model in enumerate(available_image_models(), start=1)
+    )
+
+
+def select_image_model(
+    selection: ModeSelection,
+    *,
+    input_fn: Callable[[str], str] = input,
+    output_fn: Callable[[str], None],
+) -> ModeSelection | None:
+    models = available_image_models()
+    output_fn(f"可用图像模型：\n{_image_model_menu()}\n")
+    while True:
+        try:
+            raw = input_fn(f"请选择图像模型 [1-{len(models)}]> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            return None
+        try:
+            index = int(raw)
+        except ValueError:
+            index = 0
+        if 1 <= index <= len(models):
+            return replace(selection, image_model=models[index - 1])
+        output_fn(f"请输入 1-{len(models)}。\n")
 
 
 def select_mode(
@@ -45,7 +81,12 @@ def select_mode(
         except ValueError:
             index = 0
         if 1 <= index <= len(combinations):
-            return combinations[index - 1]
+            selection = combinations[index - 1]
+            if selection.function is FunctionMode.IMAGE:
+                return select_image_model(
+                    selection, input_fn=input_fn, output_fn=output_fn
+                )
+            return selection
         output_fn(f"请输入 1-{len(combinations)}。\n")
 
 
