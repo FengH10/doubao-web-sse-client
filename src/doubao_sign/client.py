@@ -22,7 +22,14 @@ from .artifacts import (
     extract_artifact_refs,
 )
 from .mstoken import DEFAULT_USER_AGENT
-from .modes import DEFAULT_MODE, FunctionMode, ModeSelection, apply_mode, prepare_prompt
+from .modes import (
+    DEFAULT_IMAGE_MODEL,
+    DEFAULT_MODE,
+    FunctionMode,
+    ModeSelection,
+    apply_mode,
+    prepare_prompt,
+)
 
 
 class DoubaoProtocolError(RuntimeError):
@@ -233,7 +240,9 @@ class DoubaoClient:
                 "ability_param": json.dumps(
                     {
                         "ability_param": {
-                            "model": "Seedream 5.5",
+                            "model": (
+                                selection.image_model or DEFAULT_IMAGE_MODEL
+                            ).value,
                             "ratio": "auto",
                             "transparent": "false",
                             "input_box_content": {

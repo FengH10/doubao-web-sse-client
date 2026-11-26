@@ -20,14 +20,33 @@ class AnswerMode(str, Enum):
     SEARCH = "联网搜索（自动触发）"
 
 
+class ImageModel(str, Enum):
+    SEEDREAM_5_5 = "Seedream 5.5"
+    SEEDREAM_5_0_PRO = "Seedream 5.0 Pro"
+    SEEDREAM_5_0_FLASH = "Seedream 5.0 Flash"
+    SEEDREAM_4_5 = "Seedream 4.5"
+    SEEDREAM_4_0 = "Seedream 4.0"
+
+
+DEFAULT_IMAGE_MODEL = ImageModel.SEEDREAM_5_5
+
+
 @dataclass(frozen=True)
 class ModeSelection:
     function: FunctionMode
     answer: AnswerMode
+    image_model: ImageModel | None = None
+
+    def __post_init__(self) -> None:
+        if self.function is FunctionMode.IMAGE and self.image_model is None:
+            object.__setattr__(self, "image_model", DEFAULT_IMAGE_MODEL)
+        elif self.function is not FunctionMode.IMAGE and self.image_model is not None:
+            raise ValueError("只有图像生成模式可以选择图像模型")
 
     @property
     def label(self) -> str:
-        return f"{self.function.value}/{self.answer.value}"
+        base = f"{self.function.value}/{self.answer.value}"
+        return f"{base}/{self.image_model.value}" if self.image_model else base
 
 
 class UnsupportedModeCombination(ValueError):
@@ -49,8 +68,16 @@ def available_combinations() -> tuple[ModeSelection, ...]:
     return _AVAILABLE
 
 
+def available_image_models() -> tuple[ImageModel, ...]:
+    return tuple(ImageModel)
+
+
 def _validate(selection: ModeSelection) -> None:
-    if selection not in _AVAILABLE:
+    if not any(
+        available.function is selection.function
+        and available.answer is selection.answer
+        for available in _AVAILABLE
+    ):
         raise UnsupportedModeCombination(f"不支持的模式组合：{selection.label}")
 
 

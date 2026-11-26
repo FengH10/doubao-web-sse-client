@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
+import doubao_sign.modes as modes
 from doubao_sign.artifacts import ArtifactDownloadError
 from doubao_sign.client import DoubaoClient, DoubaoSession
 from doubao_sign.modes import (
@@ -166,6 +167,35 @@ class ModePresetTests(unittest.TestCase):
         self.assertFalse(chat["option"]["is_old_user"])
         self.assertEqual(chat["option"]["model_config"]["model_item_key"], "0")
         self.assertEqual(chat["ext"]["agent_mode"], "2")
+
+    def test_each_supported_image_model_is_serialized_into_the_request(self):
+        image_model = getattr(modes, "ImageModel", None)
+        self.assertIsNotNone(image_model, "ImageModel contract is missing")
+        expected_names = (
+            "Seedream 5.5",
+            "Seedream 5.0 Pro",
+            "Seedream 5.0 Flash",
+            "Seedream 4.5",
+            "Seedream 4.0",
+        )
+
+        self.assertEqual(
+            tuple(model.value for model in modes.available_image_models()),
+            expected_names,
+        )
+        for expected_name in expected_names:
+            with self.subTest(model=expected_name):
+                selection = ModeSelection(
+                    FunctionMode.IMAGE,
+                    AnswerMode.FAST,
+                    image_model=image_model(expected_name),
+                )
+                body = self.make_client().build_body("蓝色圆点", mode=selection)
+                ability = json.loads(body["chat_ability"]["ability_param"])
+
+                self.assertEqual(
+                    ability["ability_param"]["model"], expected_name
+                )
 
     def test_ppt_stream_allows_longer_generation_time(self):
         client = self.make_client()
