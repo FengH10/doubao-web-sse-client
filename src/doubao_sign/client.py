@@ -226,7 +226,50 @@ class DoubaoClient:
                 "commerce_credit_config_enable": "0",
             },
         }
-        return apply_mode(body, selection)
+        result = apply_mode(body, selection)
+        if selection.function is FunctionMode.IMAGE:
+            result["chat_ability"] = {
+                "ability_type": 3,
+                "ability_param": json.dumps(
+                    {
+                        "ability_param": {
+                            "model": "Seedream 5.5",
+                            "ratio": "auto",
+                            "transparent": "false",
+                            "input_box_content": {
+                                "user_input_content": prompt,
+                                "reply_message_format": "生成图片：%s",
+                            },
+                        },
+                        "ability_type": 1,
+                    },
+                    ensure_ascii=False,
+                    separators=(",", ":"),
+                ),
+            }
+            result["option"].pop("agent_mode", None)
+            result["option"]["model_config"] = {
+                "model_item_key": "",
+                "model_extra_params": {},
+            }
+            result["option"]["aggregate_params"].update(
+                {
+                    "mode_id": "",
+                    "model_item_key": "",
+                    "agent_mode": "",
+                    "reasoning_effort": "",
+                }
+            )
+            result["option"]["queue_client_state"] = {
+                "queue_enabled": True,
+                "queue_is_empty": True,
+                "queue_submit_mode": 2,
+            }
+            result["option"]["is_old_user"] = True
+            result["ext"].pop("agent_mode", None)
+            result["ext"].pop("use_deep_think", None)
+            result["ext"]["answer_with_suggest"] = "0"
+        return result
 
     @staticmethod
     def serialize_body(body: dict) -> str:

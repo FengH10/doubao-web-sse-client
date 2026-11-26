@@ -60,7 +60,7 @@ class ArtifactExtractionTests(unittest.TestCase):
         self.assertEqual(refs[0].url, "https://cdn.example/image-output.webp")
         self.assertEqual(refs[0].kind, ArtifactKind.IMAGE)
 
-    def test_prefers_original_image_over_preview_variants(self):
+    def test_prefers_raw_original_over_watermarked_and_preview_variants(self):
         event = json.dumps({
             "creations": [{
                 "image": {
@@ -75,7 +75,7 @@ class ArtifactExtractionTests(unittest.TestCase):
         refs = extract_artifact_refs(event, ArtifactKind.IMAGE)
         self.assertEqual(
             [ref.url for ref in refs],
-            ["https://cdn.example/original.png"],
+            ["https://cdn.example/raw.png"],
         )
 
     def test_extracts_extensionless_ppt_download_from_typed_context(self):

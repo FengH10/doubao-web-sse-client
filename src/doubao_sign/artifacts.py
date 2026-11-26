@@ -99,7 +99,7 @@ def extract_artifact_refs(
                     "image_thumb",
                 )
                 if any(variant in value for variant in variants):
-                    for variant in ("image_ori", "image_ori_raw"):
+                    for variant in ("image_ori_raw", "image_ori"):
                         image_data = value.get(variant)
                         if not isinstance(image_data, dict):
                             continue

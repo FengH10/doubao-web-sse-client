@@ -104,6 +104,69 @@ class ModePresetTests(unittest.TestCase):
         self.assertEqual(deep["client_meta"]["last_message_index"], 9)
         self.assertEqual(fast["client_meta"]["last_message_index"], 9)
 
+    def test_only_image_mode_uses_captured_seedream_5_5_ability(self):
+        client = self.make_client()
+
+        image = client.build_body(
+            "蓝色圆点", mode=ModeSelection(FunctionMode.IMAGE, AnswerMode.FAST)
+        )
+        chat = client.build_body(
+            "蓝色圆点", mode=ModeSelection(FunctionMode.CHAT, AnswerMode.FAST)
+        )
+
+        self.assertIn("chat_ability", image)
+        self.assertEqual(image["chat_ability"]["ability_type"], 3)
+        self.assertEqual(
+            json.loads(image["chat_ability"]["ability_param"]),
+            {
+                "ability_param": {
+                    "model": "Seedream 5.5",
+                    "ratio": "auto",
+                    "transparent": "false",
+                    "input_box_content": {
+                        "user_input_content": "蓝色圆点",
+                        "reply_message_format": "生成图片：%s",
+                    },
+                },
+                "ability_type": 1,
+            },
+        )
+        self.assertNotIn("agent_mode", image["option"])
+        self.assertEqual(
+            image["option"]["model_config"],
+            {"model_item_key": "", "model_extra_params": {}},
+        )
+        self.assertEqual(
+            image["option"]["aggregate_params"],
+            {
+                "mention_skill_list": "[]",
+                "mention_plugin_list": "[]",
+                "mention_ext": "[{}]",
+                "conversation_mode": "",
+                "mode_id": "",
+                "model_item_key": "",
+                "agent_mode": "",
+                "reasoning_effort": "",
+                "provider_id": "",
+            },
+        )
+        self.assertEqual(
+            image["option"]["queue_client_state"],
+            {
+                "queue_enabled": True,
+                "queue_is_empty": True,
+                "queue_submit_mode": 2,
+            },
+        )
+        self.assertTrue(image["option"]["is_old_user"])
+        self.assertNotIn("agent_mode", image["ext"])
+        self.assertNotIn("use_deep_think", image["ext"])
+        self.assertEqual(image["ext"]["answer_with_suggest"], "0")
+        self.assertNotIn("chat_ability", chat)
+        self.assertFalse(chat["option"]["is_old_user"])
+        self.assertEqual(chat["option"]["model_config"]["model_item_key"], "0")
+        self.assertEqual(chat["ext"]["agent_mode"], "2")
+
     def test_ppt_stream_allows_longer_generation_time(self):
         client = self.make_client()
         calls = []
